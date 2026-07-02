@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>The Collector's Cellar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wine:#722F37;
+    --wine-deep:#4A0E14;
+    --wine-ink:#38090E;
+    --gold:#B7975A;
+    --gold-soft:#C9AE79;
+    --bg:#F6EFE4;
+    --bg-2:#EFE5D6;
+    --card:#FBF6EE;
+    --ink:#2C2622;
+    --ink-soft:#6A5F55;
+    --line:rgba(56,9,14,.12);
+    --line-strong:rgba(56,9,14,.22);
+    --white:#FBF7F1;
+    --shadow:0 10px 30px -12px rgba(56,9,14,.28);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit}
+
+  /* ---------- SPLASH ---------- */
+  #splash{
+    position:fixed; inset:0; z-index:60;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:var(--white);
+    transition:opacity .8s ease;
+  }
+  #splash.gone{opacity:0; pointer-events:none}
+  .brand{position:relative; display:inline-block; padding:0 .1em}
+  .brand .ink{
+    display:inline-block;
+    font-family:'Great Vibes',cursive;
+    font-size:clamp(46px,11.5vw,138px);
+    line-height:1.14;
+    background:linear-gradient(180deg,var(--wine-deep) 0%,var(--wine) 78%);
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent; -webkit-text-fill-color:transparent;
+    clip-path:inset(0 100% 0 0);
+    padding:0 .06em;
+    filter:drop-shadow(0 1px 0 rgba(56,9,14,.06));
+  }
+  #splash.play .brand .ink{animation:write 2.6s cubic-bezier(.72,.02,.35,1) .35s forwards}
+  @keyframes write{to{clip-path:inset(0 -5% 0 0)}}
+  .brand .pen{
+    position:absolute; top:8%; bottom:16%; width:16px; left:0;
+    background:radial-gradient(closest-side, rgba(198,161,91,.85), rgba(198,161,91,0) 70%);
+    filter:blur(2px); opacity:0; pointer-events:none;
+  }
+  #splash.play .brand .pen{animation:pen 2.6s cubic-bezier(.72,.02,.35,1) .35s forwards}
+  @keyframes pen{0%{opacity:0;left:0}9%{opacity:.9}90%{opacity:.9}100%{opacity:0;left:100%}}
+  .tears{position:absolute; inset:0; overflow:visible; pointer-events:none}
+  .drip{
+    position:absolute; top:60%; width:3px; height:0;
+    background:linear-gradient(to bottom, rgba(114,47,55,0) 0%, rgba(114,47,55,.55) 40%, rgba(74,14,20,.85) 100%);
+    border-bottom-left-radius:60%; border-bottom-right-radius:60%;
+    filter:blur(.3px); will-change:height,opacity;
+  }
+  .drip::after{
+    content:""; position:absolute; left:50%; bottom:-3px; transform:translateX(-50%);
+    width:6px; height:8px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, rgba(139,60,68,.95), rgba(74,14,20,.92));
+    box-shadow:0 1px 2px rgba(56,9,14,.35);
+  }
+  .enter{
+    margin-top:clamp(30px,6vh,64px);
+    opacity:0; transform:translateY(12px);
+    background:var(--wine-deep); color:var(--white);
+    border:1px solid rgba(198,161,91,.4);
+    padding:15px 34px; border-radius:999px;
+    font-size:14px; letter-spacing:.14em; text-transform:uppercase;
+    box-shadow:var(--shadow);
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+  }
+  #splash.play .enter{animation:rise .9s ease 4.5s forwards}
+  .enter:hover{transform:translateY(-2px); box-shadow:0 16px 34px -14px rgba(56,9,14,.5)}
+  .enter:focus-visible{outline:2px solid var(--gold); outline-offset:3px}
+  @keyframes rise{to{opacity:1; transform:none}}
+  .tagline{
+    margin-top:16px; font-family:'Cormorant Garamond',serif; font-style:italic;
+    color:var(--ink-soft); font-size:clamp(14px,2.4vw,18px); letter-spacing:.02em;
+    opacity:0;
+  }
+  #splash.play .tagline{animation:rise 1.1s ease 4.2s forwards}
+
+  @media (prefers-reduced-motion: reduce){
+    #splash .brand .ink{animation:none; clip-path:none}
+    #splash .brand .pen{display:none}
+    #splash .enter, #splash .tagline{animation:none; opacity:1; transform:none}
+  }
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none; min-height:100vh}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+  header.top{
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(251,247,241,.9), rgba(246,239,228,.6));
+    position:sticky; top:0; z-index:20; backdrop-filter:saturate(1.1) blur(6px);
+  }
+  .top-inner{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0}
+  .logo{display:flex; flex-direction:column; line-height:1}
+  .logo .script{font-family:'Great Vibes',cursive; color:var(--wine-deep); font-size:30px}
+  .logo .sub{font-family:'Cormorant Garamond',serif; color:var(--ink-soft); font-size:13px; letter-spacing:.06em; margin-top:2px}
+  .top-actions{display:flex; align-items:center; gap:10px}
+  .cur-select, .icon-btn{
+    background:var(--card); border:1px solid var(--line-strong); color:var(--ink);
+    border-radius:10px; padding:9px 12px; font-size:13px;
+  }
+  .cur-select{padding-right:8px}
+  .icon-btn{display:inline-flex; align-items:center; gap:7px}
+  .icon-btn:hover{border-color:var(--wine)}
+  .btn-primary{
+    background:var(--wine-deep); color:var(--white); border:1px solid rgba(198,161,91,.4);
+    border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:500; letter-spacing:.02em;
+    box-shadow:var(--shadow);
+  }
+  .btn-primary:hover{background:#5c1119}
+  .btn-ghost{background:transparent; border:1px solid var(--line-strong); color:var(--ink); border-radius:10px; padding:10px 16px; font-size:13.5px}
+  .btn-ghost:hover{border-color:var(--wine)}
+  .btn-danger{background:transparent; border:1px solid rgba(140,26,32,.5); color:#8c1a20; border-radius:10px; padding:10px 16px; font-size:13.5px}
+  .btn-danger:hover{background:rgba(140,26,32,.06)}
+
+  .stats{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:22px 0 6px}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px}
+  .stat .n{font-family:'Cormorant Garamond',serif; font-size:30px; color:var(--wine-deep); line-height:1}
+  .stat .l{font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-soft); margin-top:6px}
+
+  .toolbar{display:flex; gap:12px; align-items:center; margin:18px 0; flex-wrap:wrap}
+  .search-field{position:relative; flex:1; min-width:220px}
+  .search-field input{
+    width:100%; padding:12px 14px 12px 40px; border-radius:11px;
+    border:1px solid var(--line-strong); background:var(--card); font-size:14px; color:var(--ink);
+  }
+  .search-field input:focus{outline:none; border-color:var(--wine)}
+  .search-field .mag{position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--ink-soft)}
+  .sort-field{display:flex; align-items:center; gap:8px}
+  .sort-field label{font-size:12.5px; color:var(--ink-soft); letter-spacing:.04em}
+  select.sort{background:var(--card); border:1px solid var(--line-strong); color:var(--ink); border-radius:11px; padding:11px 12px; font-size:13.5px}
+
+  .group-head{grid-column:1 / -1; display:flex; align-items:baseline; gap:12px; margin:14px 2px 2px}
+  .group-head .g-name{font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--wine-deep)}
+  .group-head .g-rule{flex:1; height:1px; background:var(--line)}
+  .group-head .g-count{font-size:12px; color:var(--ink-soft); letter-spacing:.06em}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:14px; padding:6px 0 60px}
+  .bottle{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 16px 14px; cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .bottle:hover{transform:translateY(-3px); box-shadow:var(--shadow); border-color:var(--line-strong)}
+  .bottle::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:linear-gradient(var(--wine), var(--wine-deep))}
+  .bottle .vint{position:absolute; right:14px; top:12px; font-family:'Cormorant Garamond',serif; font-size:34px; color:var(--wine); line-height:1}
+  .bottle .producer{font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--ink); line-height:1.12; padding-right:70px}
+  .bottle .name{font-size:13px; color:var(--ink-soft); margin-top:2px; padding-right:70px}
+  .bottle .meta{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; align-items:center}
+  .chip{font-size:11.5px; padding:4px 9px; border-radius:999px; background:var(--bg-2); color:var(--ink-soft); border:1px solid var(--line)}
+  .chip.grape{background:rgba(114,47,55,.08); color:var(--wine-deep); border-color:rgba(114,47,55,.18)}
+  .bottle .foot{display:flex; align-items:center; justify-content:space-between; margin-top:13px; padding-top:11px; border-top:1px solid var(--line)}
+  .qty{font-size:13px; color:var(--ink)}
+  .qty b{font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--wine-deep)}
+  .val{font-size:13.5px; color:var(--ink); font-weight:500}
+  .status{font-size:11px; letter-spacing:.05em; padding:3px 9px; border-radius:999px; border:1px solid transparent}
+  .status.cellar{background:rgba(64,64,120,.08); color:#3f3f78; border-color:rgba(64,64,120,.18)}
+  .status.ready{background:rgba(46,120,72,.1); color:#2b6b45; border-color:rgba(46,120,72,.2)}
+  .status.peak{background:rgba(183,151,90,.16); color:#8a6a1f; border-color:rgba(183,151,90,.32)}
+  .status.soon{background:rgba(196,110,40,.12); color:#a1560e; border-color:rgba(196,110,40,.28)}
+  .status.past{background:rgba(140,26,32,.1); color:#8c1a20; border-color:rgba(140,26,32,.24)}
+  .status.unknown{background:var(--bg-2); color:var(--ink-soft); border-color:var(--line)}
+
+  .empty{grid-column:1 / -1; text-align:center; padding:70px 20px; color:var(--ink-soft)}
+  .empty h3{font-family:'Cormorant Garamond',serif; font-size:26px; color:var(--wine-deep); margin:0 0 8px; font-weight:500}
+  .empty p{margin:0 0 20px; font-size:14.5px}
+
+  #onboarding{display:none; min-height:100vh; padding:48px 0}
+  .ob-card{max-width:640px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:20px; padding:34px; box-shadow:var(--shadow)}
+  .ob-card .script{font-family:'Great Vibes',cursive; color:var(--wine-deep); font-size:40px; text-align:center; line-height:1}
+  .ob-card .lead{text-align:center; font-family:'Cormorant Garamond',serif; font-size:19px; color:var(--ink-soft); margin:6px 0 26px; font-style:italic}
+  .field{margin-bottom:16px}
+  .field label{display:block; font-size:12.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px}
+  .field input, .field select, .field textarea{
+    width:100%; padding:12px 13px; border-radius:11px; border:1px solid var(--line-strong);
+    background:var(--white); font-size:14.5px; color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--wine)}
+  .row-2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .divider{display:flex; align-items:center; gap:12px; margin:24px 0 16px}
+  .divider .t{font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--wine-deep)}
+  .divider .r{flex:1; height:1px; background:var(--line)}
+  .consent{display:flex; gap:10px; align-items:flex-start; margin:8px 0 20px; font-size:13.5px; color:var(--ink-soft)}
+  .consent input{margin-top:3px}
+  .err{color:#8c1a20; font-size:13px; margin:-6px 0 12px; min-height:16px}
+  .ob-actions{display:flex; justify-content:flex-end; gap:10px}
+
+  .overlay{position:fixed; inset:0; z-index:40; background:rgba(44,20,14,.42); display:none; align-items:flex-start; justify-content:center; padding:26px 16px; overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:var(--card); border:1px solid var(--line-strong); border-radius:18px; width:100%; max-width:620px; box-shadow:0 30px 60px -20px rgba(56,9,14,.5); margin:auto}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--line)}
+  .modal-head h2{margin:0; font-family:'Cormorant Garamond',serif; font-weight:500; font-size:24px; color:var(--wine-deep)}
+  .x{background:transparent; border:none; font-size:22px; color:var(--ink-soft); line-height:1; padding:4px}
+  .x:hover{color:var(--wine)}
+  .modal-body{padding:20px 22px}
+  .modal-foot{display:flex; justify-content:space-between; gap:10px; padding:16px 22px; border-top:1px solid var(--line); align-items:center}
+
+  .results{max-height:280px; overflow-y:auto; margin-top:6px; border:1px solid var(--line); border-radius:12px}
+  .res{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 14px; border-bottom:1px solid var(--line); cursor:pointer}
+  .res:last-child{border-bottom:none}
+  .res:hover{background:var(--bg-2)}
+  .res .p{font-family:'Cormorant Garamond',serif; font-size:16px; color:var(--ink)}
+  .res .d{font-size:12px; color:var(--ink-soft); margin-top:1px}
+  .res .add{font-size:12px; color:var(--wine); border:1px solid rgba(114,47,55,.3); padding:5px 10px; border-radius:999px; white-space:nowrap}
+  .manual-link{margin-top:12px; font-size:13.5px; color:var(--ink-soft); text-align:center}
+  .manual-link a{color:var(--wine); text-decoration:underline; cursor:pointer}
+
+  .vpanel{background:var(--bg-2); border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:8px}
+  .vpanel .vhead{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+  .vpanel .vq{font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--wine-deep)}
+  .vpanel .vtag{font-size:11px; padding:3px 9px; border-radius:999px}
+  .vpanel .vnote{font-size:13px; color:var(--ink); line-height:1.5}
+  .vpanel .vwin{font-size:13px; color:var(--ink-soft); margin-top:8px}
+  .vpanel .vcaveat{font-size:11.5px; color:var(--ink-soft); font-style:italic; margin-top:8px; line-height:1.45}
+  .rating-Outstanding{background:rgba(114,47,55,.14); color:var(--wine-deep)}
+  .rating-Excellent{background:rgba(46,120,72,.12); color:#2b6b45}
+  .rating-VeryGood{background:rgba(183,151,90,.16); color:#8a6a1f}
+  .rating-Good{background:var(--bg-2); color:var(--ink-soft)}
+  .rating-Variable{background:rgba(196,110,40,.12); color:#a1560e}
+  .rating-Challenging{background:rgba(140,26,32,.1); color:#8c1a20}
+
+  .helper{font-size:12px; color:var(--ink-soft); margin-top:5px; line-height:1.45}
+  .helper a{color:var(--wine)}
+  .stepper{display:flex; align-items:center; gap:0; border:1px solid var(--line-strong); border-radius:11px; overflow:hidden; width:fit-content}
+  .stepper button{width:42px; height:44px; border:none; background:var(--white); font-size:20px; color:var(--wine-deep)}
+  .stepper button:hover{background:var(--bg-2)}
+  .stepper input{width:56px; text-align:center; border:none; border-left:1px solid var(--line); border-right:1px solid var(--line); height:44px; font-size:15px; background:var(--white)}
+
+  .detail-hero{display:flex; align-items:flex-start; justify-content:space-between; gap:14px}
+  .detail-hero .big-vint{font-family:'Cormorant Garamond',serif; font-size:52px; color:var(--wine); line-height:.9}
+  .detail-hero .p{font-family:'Cormorant Garamond',serif; font-size:26px; color:var(--ink); line-height:1.1}
+  .detail-hero .n{font-size:14px; color:var(--ink-soft); margin-top:2px}
+  .kv{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0}
+  .kv .k{font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-soft)}
+  .kv .v{font-size:14.5px; color:var(--ink); margin-top:2px}
+
+  .about p{font-size:14px; line-height:1.6; color:var(--ink); margin:0 0 12px}
+  .about strong{color:var(--wine-deep)}
+  .about ul{margin:0 0 12px; padding-left:18px}
+  .about li{font-size:14px; line-height:1.6; margin-bottom:6px}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--wine-deep); color:var(--white); padding:12px 20px; border-radius:999px; font-size:13.5px; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:all .3s ease; z-index:80}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  footer.data-foot{border-top:1px solid var(--line); padding:18px 0 40px; color:var(--ink-soft); font-size:12px; text-align:center}
+  footer.data-foot a{color:var(--wine); cursor:pointer}
+
+  @media (max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .row-2{grid-template-columns:1fr}
+    .logo .sub{display:none}
+    .top-actions .btn-primary span.lbl{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="brand">
+    <span class="ink">The Collector's Cellar</span>
+    <span class="pen"></span>
+    <div class="tears" id="tears"></div>
+  </div>
+  <div class="tagline">A quiet place for the bottles you're waiting on.</div>
+  <button class="enter" id="enterBtn">Enter Your Cellar</button>
+</div>
+
+<!-- ONBOARDING -->
+<section id="onboarding">
+  <div class="wrap">
+    <div class="ob-card">
+      <div class="script">The Collector's Cellar</div>
+      <div class="lead">Let's set your place at the table.</div>
+
+      <div class="field">
+        <label for="ob-name">Name</label>
+        <input id="ob-name" type="text" autocomplete="name" placeholder="Your name" />
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="ob-email">Email</label>
+          <input id="ob-email" type="email" autocomplete="email" placeholder="you@email.com" />
+        </div>
+        <div class="field">
+          <label for="ob-dob">Date of birth</label>
+          <input id="ob-dob" type="date" />
+        </div>
+      </div>
+
+      <div class="divider"><span class="t">Your collector profile</span><span class="r"></span></div>
+
+      <div class="field">
+        <label for="q1">How long have you been collecting?</label>
+        <select id="q1">
+          <option value="">Select&hellip;</option>
+          <option>Just getting started</option>
+          <option>1&ndash;3 years</option>
+          <option>3&ndash;10 years</option>
+          <option>10+ years</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="q2">Roughly how many bottles do you have today?</label>
+        <select id="q2">
+          <option value="">Select&hellip;</option>
+          <option>Fewer than 25</option>
+          <option>25&ndash;100</option>
+          <option>100&ndash;500</option>
+          <option>More than 500</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="q3">How do you mostly store your wine?</label>
+        <select id="q3">
+          <option value="">Select&hellip;</option>
+          <option>Wine fridge / cooler</option>
+          <option>Passive home cellar</option>
+          <option>Professional offsite storage</option>
+          <option>Open rack at room temperature</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="q4">Where does your collection lean?</label>
+        <select id="q4">
+          <option value="">Select&hellip;</option>
+          <option>Bordeaux &amp; Old World reds</option>
+          <option>Burgundy &amp; Pinot Noir</option>
+          <option>Champagne &amp; sparkling</option>
+          <option>New World (Napa, Australia, etc.)</option>
+          <option>Broad &amp; eclectic</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="q5">What's your main reason for cellaring?</label>
+        <select id="q5">
+          <option value="">Select&hellip;</option>
+          <option>Drinking over the next few years</option>
+          <option>Long-term aging</option>
+          <option>Investment &amp; resale</option>
+          <option>A bit of everything</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="q6">Which sounds most like you?</label>
+        <select id="q6">
+          <option value="">Select&hellip;</option>
+          <option>Casual enthusiast</option>
+          <option>Serious hobbyist</option>
+          <option>Advanced collector</option>
+          <option>I work in the trade</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="ob-cur">Preferred currency</label>
+        <select id="ob-cur">
+          <option value="USD">USD ($)</option>
+          <option value="EUR">EUR (&euro;)</option>
+          <option value="GBP">GBP (&pound;)</option>
+          <option value="CHF">CHF</option>
+        </select>
+      </div>
+
+      <label class="consent"><input id="ob-age" type="checkbox" /> <span>I confirm I'm of legal drinking age in my country.</span></label>
+      <div class="err" id="ob-err"></div>
+      <div class="ob-actions">
+        <button class="btn-primary" id="ob-submit">Create my cellar</button>
+      </div>
+      <p class="helper" style="text-align:center;margin-top:16px">Your profile is saved on this device only &mdash; it isn't sent anywhere.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="logo">
+        <span class="script">The Collector's Cellar</span>
+        <span class="sub" id="logoSub">Your cellar</span>
+      </div>
+      <div class="top-actions">
+        <select class="cur-select" id="curSelect" title="Display currency">
+          <option value="USD">USD $</option>
+          <option value="EUR">EUR &euro;</option>
+          <option value="GBP">GBP &pound;</option>
+          <option value="CHF">CHF</option>
+        </select>
+        <button class="icon-btn" id="aboutBtn" title="About the data">&#9432; <span>Data</span></button>
+        <button class="btn-primary" id="addBtn">+ <span class="lbl">Add bottle</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="toolbar">
+      <div class="search-field">
+        <span class="mag">&#8981;</span>
+        <input id="filterInput" type="text" placeholder="Search your cellar &mdash; producer, region, grape&hellip;" />
+      </div>
+      <div class="sort-field">
+        <label for="sortSelect">Sort</label>
+        <select class="sort" id="sortSelect">
+          <option value="added">Recently added</option>
+          <option value="region">Region (A&ndash;Z)</option>
+          <option value="vintage-asc">Vintage (oldest first)</option>
+          <option value="vintage-desc">Vintage (newest first)</option>
+          <option value="grape">Grape (A&ndash;Z)</option>
+          <option value="producer">Producer (A&ndash;Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <footer class="data-foot">
+    <div class="wrap">
+      Scores &amp; values are self-entered; vintage notes are general references &mdash; <a id="aboutLink">how the data works</a>.
+    </div>
+  </footer>
+</div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="addTitle">Add a bottle</h2>
+      <button class="x" data-close="addOverlay">&times;</button>
+    </div>
+    <div class="modal-body" id="addBody"></div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Bottle</h2>
+      <button class="x" data-close="detailOverlay">&times;</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div class="overlay" id="aboutOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>How the data works</h2>
+      <button class="x" data-close="aboutOverlay">&times;</button>
+    </div>
+    <div class="modal-body about">
+      <p>Straight talk about where the numbers come from, so you never make a real cellar decision on a made-up figure.</p>
+      <ul>
+        <li><strong>The wines:</strong> search runs on a built-in list of notable producers, and expands to the full LWIN reference catalogue (100k+ wines) when a <code>wines.json</code> file sits next to this page. Either way, you can add <em>any</em> bottle manually.</li>
+        <li><strong>Critic scores &amp; market value:</strong> you enter these yourself. There's no free public feed for live Wine&nbsp;Spectator / Wine&nbsp;Advocate / Vinous scores or Wine-Searcher / Liv-ex pricing, so nothing here is auto-fetched. Each bottle has a "Search on Wine-Searcher" link to check the real current price.</li>
+        <li><strong>Vintage assessments &amp; drinking windows:</strong> general, region-level references and rough maturity estimates &mdash; a sanity check, not a bottle-specific verdict. Always confirm against a professional vintage chart (Decanter, Wine Spectator, Vinous, or Jancis Robinson).</li>
+        <li><strong>Your account &amp; cellar:</strong> stored locally in this browser, not on a server. It's private, but it won't sync across devices and clearing your browser data will erase it.</li>
+      </ul>
+      <p style="font-size:12.5px;color:var(--ink-soft)">Want live pricing/scores or real multi-device accounts? Those need a paid data provider and a backend (e.g. Firebase) wired in.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ---------- storage: window.storage in preview, localStorage on GitHub Pages / local, else memory ---------- */
+var _mem = {};
+var BACKEND = (function(){
+  if (window.storage && typeof window.storage.get === "function") return "ws";
+  try { localStorage.setItem("__cc_test","1"); localStorage.removeItem("__cc_test"); return "ls"; }
+  catch(e){ return "mem"; }
+})();
+var Store = {
+  get: async function(key){
+    if (BACKEND === "ws"){ try { var r = await window.storage.get(key); return r ? r.value : null; } catch(e){ return null; } }
+    if (BACKEND === "ls"){ try { return localStorage.getItem(key); } catch(e){ return null; } }
+    return (key in _mem) ? _mem[key] : null;
+  },
+  set: async function(key,val){
+    if (BACKEND === "ws"){ try { await window.storage.set(key,val,false); return; } catch(e){} }
+    if (BACKEND === "ls"){ try { localStorage.setItem(key,val); return; } catch(e){} }
+    _mem[key] = val;
+  }
+};
+
+/* ---------- state ---------- */
+var state = { profile:null, cellar:[], currency:"USD", sort:"added", filter:"" };
+var NOW = new Date().getFullYear();
+
+async function loadState(){
+  var p = await Store.get("cc_profile");
+  state.profile = p ? safeParse(p) : null;
+  var c = await Store.get("cc_cellar");
+  state.cellar = c ? (safeParse(c) || []) : [];
+  if (state.profile && state.profile.currency) state.currency = state.profile.currency;
+}
+function safeParse(s){ try { return JSON.parse(s); } catch(e){ return null; } }
+async function saveProfile(){ await Store.set("cc_profile", JSON.stringify(state.profile)); }
+async function saveCellar(){ await Store.set("cc_cellar", JSON.stringify(state.cellar)); }
+
+/* ---------- helpers ---------- */
+function $(s){ return document.querySelector(s); }
+function $$(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
+function esc(str){
+  return String(str==null?"":str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function fmtCur(n){
+  if (n==null || n==="" || isNaN(Number(n))) return "\u2014";
+  try { return new Intl.NumberFormat(undefined,{style:"currency",currency:state.currency||"USD",maximumFractionDigits:0}).format(Number(n)); }
+  catch(e){ return (state.currency||"USD")+" "+Number(n).toLocaleString(); }
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
+function wineSearcherUrl(w, vintage){
+  var q = [w.producer, w.name, vintage].filter(Boolean).join(" ");
+  return "https://www.wine-searcher.com/find/" + slug(q);
+}
+var toastTimer;
+function toast(msg){
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+}
+
+/* ---------- curated wine database (real producers; factual attributes) ---------- */
+var WINES = [
+  {producer:"Ch\u00e2teau Lafite Rothschild", name:"", region:"Pauillac, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Latour", name:"", region:"Pauillac, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Mouton Rothschild", name:"", region:"Pauillac, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Margaux", name:"", region:"Margaux, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Haut-Brion", name:"", region:"Pessac-L\u00e9ognan, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau L\u00e9oville Las Cases", name:"", region:"Saint-Julien, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Ducru-Beaucaillou", name:"", region:"Saint-Julien, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau L\u00e9oville Barton", name:"", region:"Saint-Julien, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Pichon Baron", name:"", region:"Pauillac, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Pichon Comtesse de Lalande", name:"", region:"Pauillac, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Cos d'Estournel", name:"", region:"Saint-Est\u00e8phe, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Montrose", name:"", region:"Saint-Est\u00e8phe, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Cheval Blanc", name:"", region:"Saint-\u00c9milion, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Ausone", name:"", region:"Saint-\u00c9milion, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Ang\u00e9lus", name:"", region:"Saint-\u00c9milion, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau Pavie", name:"", region:"Saint-\u00c9milion, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"P\u00e9trus", name:"", region:"Pomerol, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Merlot"},
+  {producer:"Ch\u00e2teau Le Pin", name:"", region:"Pomerol, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Merlot"},
+  {producer:"Vieux Ch\u00e2teau Certan", name:"", region:"Pomerol, Bordeaux", country:"France", rk:"bordeaux", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ch\u00e2teau d'Yquem", name:"", region:"Sauternes, Bordeaux", country:"France", rk:"sauternes", style:"sweet", grape:"S\u00e9millon Blend"},
+  {producer:"Domaine de la Roman\u00e9e-Conti", name:"", region:"Vosne-Roman\u00e9e, Burgundy", country:"France", rk:"burgundy_red", style:"pinot", grape:"Pinot Noir"},
+  {producer:"Domaine Leroy", name:"", region:"Vosne-Roman\u00e9e, Burgundy", country:"France", rk:"burgundy_red", style:"pinot", grape:"Pinot Noir"},
+  {producer:"Domaine Armand Rousseau", name:"", region:"Gevrey-Chambertin, Burgundy", country:"France", rk:"burgundy_red", style:"pinot", grape:"Pinot Noir"},
+  {producer:"Domaine Georges Roumier", name:"", region:"Chambolle-Musigny, Burgundy", country:"France", rk:"burgundy_red", style:"pinot", grape:"Pinot Noir"},
+  {producer:"Domaine Dujac", name:"", region:"Morey-Saint-Denis, Burgundy", country:"France", rk:"burgundy_red", style:"pinot", grape:"Pinot Noir"},
+  {producer:"Domaine Leflaive", name:"", region:"Puligny-Montrachet, Burgundy", country:"France", rk:"burgundy_white", style:"whiteBurg", grape:"Chardonnay"},
+  {producer:"Domaine Coche-Dury", name:"", region:"Meursault, Burgundy", country:"France", rk:"burgundy_white", style:"whiteBurg", grape:"Chardonnay"},
+  {producer:"Giacomo Conterno", name:"Monfortino Riserva", region:"Barolo, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Bruno Giacosa", name:"", region:"Barbaresco / Barolo, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Gaja", name:"", region:"Barbaresco, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Bartolo Mascarello", name:"", region:"Barolo, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Vietti", name:"", region:"Barolo, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Giuseppe Mascarello", name:"Monprivato", region:"Barolo, Piedmont", country:"Italy", rk:"piedmont", style:"nebbiolo", grape:"Nebbiolo"},
+  {producer:"Tenuta San Guido", name:"Sassicaia", region:"Bolgheri, Tuscany", country:"Italy", rk:"tuscany", style:"bordeaux", grape:"Cabernet Blend"},
+  {producer:"Ornellaia", name:"", region:"Bolgheri, Tuscany", country:"Italy", rk:"tuscany", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Ornellaia", name:"Masseto", region:"Toscana", country:"Italy", rk:"tuscany", style:"bordeaux", grape:"Merlot"},
+  {producer:"Antinori", name:"Tignanello", region:"Toscana", country:"Italy", rk:"tuscany", style:"sangiovese", grape:"Sangiovese Blend"},
+  {producer:"Antinori", name:"Solaia", region:"Toscana", country:"Italy", rk:"tuscany", style:"sangiovese", grape:"Cab-Sangiovese Blend"},
+  {producer:"Antinori", name:"Guado al Tasso", region:"Bolgheri, Tuscany", country:"Italy", rk:"tuscany", style:"bordeaux", grape:"Bordeaux Blend"},
+  {producer:"Biondi-Santi", name:"Brunello di Montalcino", region:"Montalcino, Tuscany", country:"Italy", rk:"tuscany", style:"sangiovese", grape:"Sangiovese"},
+  {producer:"Soldera (Case Basse)", name:"", region:"Montalcino, Tuscany", country:"Italy", rk:"tuscany", style:"sangiovese", grape:"Sangiovese"},
+  {producer:"Casanova di Neri", name:"Brunello di Montalcino", region:"Montalcino, Tuscany", country:"Italy", rk:"tuscany", style:"sangiovese", grape:"Sangiovese"},
+  {producer:"Marqu\u00e9s de Riscal", name:"Gran Reserva", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"Bodegas Muga", name:"Prado Enea Gran Reserva", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"La Rioja Alta", name:"Gran Reserva 890", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"CVNE", name:"Imperial Gran Reserva", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"R. L\u00f3pez de Heredia", name:"Vi\u00f1a Tondonia", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"Marqu\u00e9s de Murrieta", name:"Castillo Ygay Gran Reserva", region:"Rioja", country:"Spain", rk:"rioja", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"Vega Sicilia", name:"\u00danico", region:"Ribera del Duero", country:"Spain", rk:"ribera", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"Dominio de Pingus", name:"Pingus", region:"Ribera del Duero", country:"Spain", rk:"ribera", style:"tempranillo", grape:"Tempranillo"},
+  {producer:"Dom P\u00e9rignon", name:"", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Champagne Blend"},
+  {producer:"Krug", name:"", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Champagne Blend"},
+  {producer:"Louis Roederer", name:"Cristal", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Champagne Blend"},
+  {producer:"Salon", name:"Le Mesnil Blanc de Blancs", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Chardonnay"},
+  {producer:"Bollinger", name:"La Grande Ann\u00e9e", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Champagne Blend"},
+  {producer:"Pol Roger", name:"Sir Winston Churchill", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Champagne Blend"},
+  {producer:"Taittinger", name:"Comtes de Champagne", region:"Champagne", country:"France", rk:"champagne", style:"champagne", grape:"Chardonnay"},
+  {producer:"Screaming Eagle", name:"", region:"Napa Valley", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Cabernet Sauvignon"},
+  {producer:"Harlan Estate", name:"", region:"Napa Valley", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Bordeaux Blend"},
+  {producer:"Opus One", name:"", region:"Napa Valley", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Bordeaux Blend"},
+  {producer:"Ridge", name:"Monte Bello", region:"Santa Cruz Mountains", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Bordeaux Blend"},
+  {producer:"Dominus Estate", name:"", region:"Napa Valley", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Bordeaux Blend"},
+  {producer:"Caymus", name:"Special Selection", region:"Napa Valley", country:"USA", rk:"napa_cab", style:"cabernet", grape:"Cabernet Sauvignon"},
+  {producer:"E. Guigal", name:"La Landonne", region:"C\u00f4te-R\u00f4tie, Rh\u00f4ne", country:"France", rk:"rhone_north", style:"syrah", grape:"Syrah"},
+  {producer:"E. Guigal", name:"La Mouline", region:"C\u00f4te-R\u00f4tie, Rh\u00f4ne", country:"France", rk:"rhone_north", style:"syrah", grape:"Syrah"},
+  {producer:"Jean-Louis Chave", name:"Hermitage", region:"Hermitage, Rh\u00f4ne", country:"France", rk:"rhone_north", style:"syrah", grape:"Syrah"},
+  {producer:"Ch\u00e2teau de Beaucastel", name:"", region:"Ch\u00e2teauneuf-du-Pape, Rh\u00f4ne", country:"France", rk:"rhone_south", style:"grenache", grape:"Grenache Blend (GSM)"},
+  {producer:"Ch\u00e2teau Rayas", name:"", region:"Ch\u00e2teauneuf-du-Pape, Rh\u00f4ne", country:"France", rk:"rhone_south", style:"grenache", grape:"Grenache"},
+  {producer:"Taylor Fladgate", name:"Vintage Port", region:"Douro", country:"Portugal", rk:"port", style:"port", grape:"Port Blend"},
+  {producer:"Graham's", name:"Vintage Port", region:"Douro", country:"Portugal", rk:"port", style:"port", grape:"Port Blend"},
+  {producer:"Fonseca", name:"Vintage Port", region:"Douro", country:"Portugal", rk:"port", style:"port", grape:"Port Blend"},
+  {producer:"Penfolds", name:"Grange", region:"South Australia", country:"Australia", rk:"barossa", style:"shiraz", grape:"Shiraz"},
+  {producer:"Bodega Aleanna", name:"Gran Enemigo", region:"Mendoza", country:"Argentina", rk:"mendoza", style:"cabfranc", grape:"Cabernet Franc"},
+  {producer:"Catena Zapata", name:"Nicol\u00e1s Catena Zapata", region:"Mendoza", country:"Argentina", rk:"mendoza", style:"cabernet", grape:"Cabernet-Malbec"},
+  {producer:"Egon M\u00fcller", name:"Scharzhofberger Riesling", region:"Mosel", country:"Germany", rk:"germany", style:"riesling", grape:"Riesling"}
+];
+WINES.forEach(function(w){ w.id = slug((w.producer||"")+"-"+(w.name||"")+"-"+(w.region||"")); });
+
+/* ---------- catalogue: built-in list + optional external LWIN-derived wines.json ---------- */
+var CATALOG = WINES.slice();
+function reindexCatalog(){ for (var i=0;i<CATALOG.length;i++) CATALOG[i].cid = "c"+i; }
+reindexCatalog();
+
+function regionToRk(region, sub){
+  var s = ((region||"")+" "+(sub||"")).toLowerCase();
+  function has(){ for (var i=0;i<arguments.length;i++){ if (s.indexOf(arguments[i])!==-1) return true; } return false; }
+  if (has("sauternes","barsac")) return "sauternes";
+  if (has("pauillac","margaux","saint-julien","st-julien","saint-est","st-est","saint-\u00e9milion","saint-emilion","st-emilion","pomerol","pessac","m\u00e9doc","medoc","listrac","moulis","fronsac","graves","bordeaux")) return "bordeaux";
+  if (has("barolo","barbaresco","piedmont","piemonte","langhe")) return "piedmont";
+  if (has("brunello","montalcino","bolgheri","chianti","montepulciano","tuscany","toscana","maremma")) return "tuscany";
+  if (has("rioja")) return "rioja";
+  if (has("ribera")) return "ribera";
+  if (has("champagne")) return "champagne";
+  if (has("napa","oakville","rutherford","stags leap","howell mountain","santa cruz","sonoma","california")) return "napa_cab";
+  if (has("c\u00f4te-r\u00f4tie","cote-rotie","cote rotie","hermitage","cornas","saint-joseph","crozes")) return "rhone_north";
+  if (has("ch\u00e2teauneuf","chateauneuf","gigondas","vacqueyras","tavel","rasteau","rh\u00f4ne","rhone")) return "rhone_south";
+  if (has("douro","porto","oporto")) return "port";
+  if (has("mosel","rheingau","pfalz","nahe","rheinhessen","germany")) return "germany";
+  if (has("barossa","mclaren","coonawarra","clare valley","south australia","australia")) return "barossa";
+  if (has("chablis","meursault","puligny","chassagne","montrachet","corton-charlemagne","m\u00e2con","macon")) return "burgundy_white";
+  if (has("gevrey","chambertin","vosne","roman\u00e9e","romanee","chambolle","musigny","morey","nuits-saint","volnay","pommard","beaune","\u00e9chezeaux","echezeaux","burgundy","bourgogne","c\u00f4te de nuits","cote de nuits")) return "burgundy_red";
+  if (has("mendoza","uco","argentina")) return "mendoza";
+  return "";
+}
+function grapeFromRk(rk){
+  var m = {bordeaux:"Bordeaux Blend",sauternes:"S\u00e9millon Blend",piedmont:"Nebbiolo",tuscany:"Sangiovese",rioja:"Tempranillo",ribera:"Tempranillo",champagne:"Champagne Blend",napa_cab:"Cabernet Sauvignon",rhone_north:"Syrah",rhone_south:"Grenache Blend (GSM)",port:"Port Blend",germany:"Riesling",barossa:"Shiraz",burgundy_white:"Chardonnay",burgundy_red:"Pinot Noir",mendoza:"Malbec"};
+  return m[rk] || "";
+}
+function normalizeCatalogEntry(x){
+  if (!x) return null;
+  var producer = x.p || x.producer || "";
+  if (!producer) return null;
+  var name = x.n || x.name || "";
+  var region = x.r || x.region || "";
+  var country = x.c || x.country || "";
+  var rk = x.rk || "";
+  var style = styleFromRk(rk);
+  var grape = x.g || x.grape || grapeFromRk(rk) || "";
+  return { producer:producer, name:name, region:region, country:country, rk:rk, style:style, grape:grape };
+}
+async function loadExtraCatalog(){
+  try {
+    var res = await fetch("./wines.json", {cache:"force-cache"});
+    if (!res.ok) return;
+    var arr = await res.json();
+    if (!Array.isArray(arr)) return;
+    var extra = [];
+    for (var i=0;i<arr.length;i++){ var n = normalizeCatalogEntry(arr[i]); if (n) extra.push(n); }
+    if (extra.length){ CATALOG = WINES.slice().concat(extra); reindexCatalog(); if ($("#catNote")) setCatNote(); }
+  } catch(e){ /* no external catalogue; built-in list is used */ }
+}
+function setCatNote(){
+  var el = $("#catNote"); if (!el) return;
+  el.textContent = "Searching " + CATALOG.length.toLocaleString() + " wines. Can't find yours? Add it manually below.";
+}
+
+var REGION_NAMES = {
+  bordeaux:"Bordeaux", sauternes:"Sauternes", burgundy_red:"Burgundy (red)", burgundy_white:"Burgundy (white)",
+  piedmont:"Piedmont (Barolo/Barbaresco)", tuscany:"Tuscany", rioja:"Rioja", ribera:"Ribera del Duero",
+  champagne:"Champagne", napa_cab:"California Cabernet", rhone_north:"Northern Rh\u00f4ne", rhone_south:"Southern Rh\u00f4ne",
+  port:"Vintage Port (Douro)", germany:"Germany (Riesling)", barossa:"Australian Shiraz", mendoza:"Mendoza"
+};
+
+/* ---------- vintage reference (coarse, mainstream; verify against a pro chart) ---------- */
+var O="Outstanding", E="Excellent", V="Very Good", G="Good", A="Variable", C="Challenging";
+var VINTAGES = {
+  bordeaux:{2000:O,2001:V,2002:G,2003:V,2004:G,2005:O,2006:V,2007:G,2008:V,2009:O,2010:O,2011:G,2012:G,2013:C,2014:V,2015:V,2016:O,2017:G,2018:E,2019:E,2020:E,2021:G,2022:O},
+  tuscany:{2004:V,2006:E,2007:V,2008:G,2009:G,2010:E,2011:V,2012:G,2013:V,2014:C,2015:E,2016:E,2017:G,2018:G,2019:E,2020:V,2021:E,2022:V},
+  piedmont:{2004:E,2005:G,2006:E,2007:V,2008:V,2009:G,2010:O,2011:G,2012:V,2013:E,2014:C,2015:V,2016:O,2017:G,2018:G,2019:E,2020:V,2021:V},
+  burgundy_red:{2002:E,2005:O,2009:E,2010:E,2011:G,2012:V,2013:G,2014:V,2015:E,2016:V,2017:V,2018:V,2019:E,2020:E,2021:G,2022:V},
+  burgundy_white:{2010:E,2011:G,2013:G,2014:E,2015:V,2016:V,2017:E,2018:V,2019:E,2020:V,2021:G,2022:E},
+  champagne:{2002:O,2004:E,2006:V,2008:O,2012:E,2013:V,2014:V,2015:V,2016:V,2018:E},
+  rioja:{2001:O,2004:E,2005:E,2009:V,2010:O,2011:E,2012:V,2013:C,2014:V,2015:V,2016:E,2017:G,2018:V,2019:E,2020:G,2021:V},
+  ribera:{2004:E,2009:V,2010:E,2011:E,2012:V,2015:V,2016:E,2019:E,2020:G,2021:V},
+  napa_cab:{2007:E,2010:V,2012:E,2013:O,2014:V,2015:V,2016:E,2017:A,2018:E,2019:E,2020:C,2021:E},
+  rhone_north:{2009:E,2010:O,2011:G,2012:V,2015:O,2016:E,2017:V,2018:V,2019:E,2020:V,2021:G},
+  rhone_south:{2007:O,2010:O,2012:V,2015:E,2016:O,2017:V,2018:V,2019:E,2020:V,2021:G},
+  port:{2000:E,2003:E,2007:E,2011:O,2016:O,2017:O},
+  sauternes:{2001:O,2005:E,2007:E,2009:E,2010:E,2011:E,2015:V,2016:V,2017:V},
+  germany:{2015:E,2016:V,2017:V,2018:E,2019:E,2020:V,2021:V},
+  barossa:{2010:E,2012:E,2016:E,2018:V,2019:V,2021:E}
+};
+var RATING_DESC = {
+  Outstanding:"A benchmark year \u2014 concentrated, balanced, and built for long aging.",
+  Excellent:"Excellent quality with strong aging potential.",
+  "Very Good":"A very good, well-balanced vintage.",
+  Good:"Solid \u2014 generally suited to earlier or mid-term drinking.",
+  Variable:"Variable \u2014 quality depends heavily on producer and site.",
+  Challenging:"A tricky year \u2014 choose carefully by producer."
+};
+function ratingClass(q){ return "rating-" + (q||"").replace(/\s+/g,""); }
+function getVintage(rk, year){
+  var tbl = VINTAGES[rk];
+  if (!tbl) return null;
+  var q = tbl[Number(year)];
+  return q ? {q:q, note: RATING_DESC[q]} : null;
+}
+
+/* ---------- drinking window heuristic (rough, general) ---------- */
+var STYLE_WINDOW = {
+  bordeaux:[8,30], cabernet:[8,30], nebbiolo:[8,30], sangiovese:[6,25],
+  pinot:[5,20], whiteBurg:[3,12], tempranillo:[5,25], champagne:[5,25],
+  syrah:[6,25], grenache:[6,22], sweet:[8,40], port:[15,50], riesling:[5,25],
+  shiraz:[6,25], cabfranc:[6,25]
+};
+var QUALITY_ADJ = {
+  Outstanding:[2,6], Excellent:[1,4], "Very Good":[0,0], Good:[-1,-3], Variable:[-1,-5], Challenging:[-2,-8]
+};
+function computeWindow(style, vintage, q){
+  vintage = Number(vintage);
+  var base = STYLE_WINDOW[style] || [4,15];
+  var adj = QUALITY_ADJ[q] || [0,0];
+  var from = vintage + base[0] + adj[0];
+  var to   = vintage + base[1] + adj[1];
+  if (from < vintage) from = vintage;
+  if (to <= from) to = from + 2;
+  return {from:from, to:to};
+}
+function statusFor(from, to){
+  if (!from || !to) return {label:"\u2014", cls:"unknown"};
+  var span = to - from;
+  if (NOW < from) return {label:"Needs age", cls:"cellar"};
+  if (NOW < from + span*0.33) return {label:"Drinkable now", cls:"ready"};
+  if (NOW < from + span*0.75) return {label:"In its prime", cls:"peak"};
+  if (NOW <= to) return {label:"Drink soon", cls:"soon"};
+  return {label:"Past window", cls:"past"};
+}
+
+/* ---------- splash ---------- */
+function spawnDrips(){
+  var tears = $("#tears");
+  if (!tears) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  var count = 14;
+  for (var i=0;i<count;i++){
+    (function(){
+      var d = document.createElement("div");
+      d.className = "drip";
+      var left = 4 + Math.random()*92;
+      var top = 46 + Math.random()*34;
+      var w = 2 + Math.random()*3;
+      var h = 60 + Math.random()*190;
+      var delay = Math.random()*1.6;
+      var dur = 2.2 + Math.random()*1.8;
+      d.style.left = left+"%";
+      d.style.top = top+"%";
+      d.style.width = w+"px";
+      d.style.transition = "none";
+      d.style.opacity = "0";
+      tears.appendChild(d);
+      requestAnimationFrame(function(){
+        d.style.transition = "height "+dur+"s cubic-bezier(.45,.02,.55,1) "+delay+"s, opacity "+dur+"s ease "+delay+"s";
+        d.style.height = h+"px";
+        d.style.opacity = "0.55";
+      });
+    })();
+  }
+}
+function startSplash(){
+  var s = $("#splash");
+  if (!s) return;
+  s.classList.add("play");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!reduce) setTimeout(spawnDrips, 2950);
+}
+function enterApp(){
+  var s = $("#splash");
+  s.classList.add("gone");
+  setTimeout(function(){ s.style.display="none"; }, 800);
+  if (state.profile) showMain();
+  else showOnboarding();
+}
+
+/* ---------- onboarding ---------- */
+function showOnboarding(){
+  $("#onboarding").style.display = "block";
+  $("#app").style.display = "none";
+  if (state.currency) $("#ob-cur").value = state.currency;
+  $("#ob-name").focus();
+}
+function validEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function submitOnboarding(){
+  var name = $("#ob-name").value.trim();
+  var email = $("#ob-email").value.trim();
+  var dob = $("#ob-dob").value;
+  var age = $("#ob-age").checked;
+  var q = [1,2,3,4,5,6].map(function(i){ return $("#q"+i).value; });
+  var err = $("#ob-err");
+  err.textContent = "";
+  if (!name){ err.textContent = "Please add your name."; return; }
+  if (!validEmail(email)){ err.textContent = "Please enter a valid email address."; return; }
+  if (!dob){ err.textContent = "Please add your date of birth."; return; }
+  if (!age){ err.textContent = "Please confirm you're of legal drinking age."; return; }
+  if (q.some(function(v){ return !v; })){ err.textContent = "Please answer all six profile questions."; return; }
+  state.currency = $("#ob-cur").value || "USD";
+  state.profile = {
+    name:name, email:email, dob:dob, currency:state.currency,
+    answers:{ experience:q[0], size:q[1], storage:q[2], focus:q[3], goal:q[4], selfRating:q[5] },
+    createdAt: new Date().toISOString()
+  };
+  saveProfile();
+  $("#onboarding").style.display = "none";
+  showMain();
+  toast("Welcome, " + name.split(" ")[0] + " \u2014 your cellar is ready.");
+}
+
+/* ---------- main ---------- */
+function showMain(){
+  $("#app").style.display = "block";
+  $("#onboarding").style.display = "none";
+  var first = state.profile ? (state.profile.name||"").split(" ")[0] : "";
+  $("#logoSub").textContent = first ? (first + "'s cellar") : "Your cellar";
+  $("#curSelect").value = state.currency || "USD";
+  renderStats();
+  renderCellar();
+}
+function totalsByCurrency(){
+  var bottles=0, wines=state.cellar.length, regions={}, value=0, cost=0, ready=0, rc=0;
+  state.cellar.forEach(function(e){
+    var qy = Number(e.quantity)||0;
+    bottles += qy;
+    if (e.region) regions[e.region] = 1;
+    if (e.value!=null && e.value!=="" && !isNaN(Number(e.value))) value += Number(e.value)*qy;
+    if (e.cost!=null && e.cost!=="" && !isNaN(Number(e.cost))) cost += Number(e.cost)*qy;
+    var win = e.win || {};
+    var st = statusFor(win.from, win.to);
+    if (st.cls==="ready" || st.cls==="peak" || st.cls==="soon") ready += qy;
+  });
+  for (var k in regions){ if (regions.hasOwnProperty(k)) rc++; }
+  return {bottles:bottles, wines:wines, regions:rc, value:value, cost:cost, ready:ready};
+}
+function renderStats(){
+  var t = totalsByCurrency();
+  var items = [
+    {n:t.bottles, l:"Bottles"},
+    {n:t.wines, l:"Distinct wines"},
+    {n:t.regions, l:"Regions"},
+    {n:fmtCur(t.value), l:"Est. value"},
+    {n:t.ready, l:"Ready to drink"}
+  ];
+  $("#stats").innerHTML = items.map(function(i){
+    return '<div class="stat"><div class="n">'+esc(i.n)+'</div><div class="l">'+esc(i.l)+'</div></div>';
+  }).join("");
+}
+function getFiltered(){
+  var f = (state.filter||"").toLowerCase().trim();
+  var list = state.cellar.slice();
+  if (f){
+    list = list.filter(function(e){
+      var hay = [e.producer,e.name,e.region,e.country,e.grape,e.vintage].join(" ").toLowerCase();
+      return hay.indexOf(f) !== -1;
+    });
+  }
+  var s = state.sort;
+  function byStr(k){ return function(a,b){ return String(a[k]||"").localeCompare(String(b[k]||"")); }; }
+  if (s==="added") list.sort(function(a,b){ return (b.addedAt||0)-(a.addedAt||0); });
+  else if (s==="region") list.sort(function(a,b){ return byStr("region")(a,b) || byStr("producer")(a,b); });
+  else if (s==="grape") list.sort(function(a,b){ return byStr("grape")(a,b) || byStr("producer")(a,b); });
+  else if (s==="producer") list.sort(function(a,b){ return byStr("producer")(a,b) || (Number(a.vintage)-Number(b.vintage)); });
+  else if (s==="vintage-asc") list.sort(function(a,b){ return (Number(a.vintage)||0)-(Number(b.vintage)||0); });
+  else if (s==="vintage-desc") list.sort(function(a,b){ return (Number(b.vintage)||0)-(Number(a.vintage)||0); });
+  return list;
+}
+function bottleCard(e){
+  var win = e.win || {};
+  var st = statusFor(win.from, win.to);
+  var nameLine = e.name ? esc(e.name) : "&nbsp;";
+  return (
+    '<div class="bottle" data-id="'+esc(e.id)+'">'+
+      '<div class="vint">'+esc(e.vintage||"NV")+'</div>'+
+      '<div class="producer">'+esc(e.producer)+'</div>'+
+      '<div class="name">'+nameLine+'</div>'+
+      '<div class="meta">'+
+        '<span class="chip grape">'+esc(e.grape||"\u2014")+'</span>'+
+        '<span class="chip">'+esc(e.region||"\u2014")+'</span>'+
+      '</div>'+
+      '<div class="foot">'+
+        '<span class="qty">\u00d7<b>'+esc(e.quantity||1)+'</b></span>'+
+        '<span class="status '+st.cls+'">'+esc(st.label)+'</span>'+
+        '<span class="val">'+ (e.value!=null&&e.value!==""? fmtCur(e.value):"") +'</span>'+
+      '</div>'+
+    '</div>'
+  );
+}
+function renderCellar(){
+  var grid = $("#grid");
+  var list = getFiltered();
+  if (state.cellar.length === 0){
+    grid.innerHTML = '<div class="empty"><h3>Your cellar is empty</h3><p>Add your first bottle to begin tracking vintages, drinking windows, and value.</p><button class="btn-primary" id="emptyAdd">+ Add your first bottle</button></div>';
+    var b = $("#emptyAdd"); if (b) b.addEventListener("click", openAdd);
+    return;
+  }
+  if (list.length === 0){
+    grid.innerHTML = '<div class="empty"><h3>No matches</h3><p>Nothing in your cellar matches "'+esc(state.filter)+'". Try a different search.</p></div>';
+    return;
+  }
+  var grouped = (state.sort === "region" || state.sort === "grape");
+  var html = "";
+  if (grouped){
+    var key = state.sort === "region" ? "region" : "grape";
+    var current = null;
+    list.forEach(function(e){
+      var g = e[key] || "\u2014";
+      if (g !== current){
+        current = g;
+        var cnt = list.filter(function(x){ return (x[key]||"\u2014")===g; }).length;
+        html += '<div class="group-head"><span class="g-name">'+esc(g)+'</span><span class="g-rule"></span><span class="g-count">'+cnt+' '+(cnt===1?"wine":"wines")+'</span></div>';
+      }
+      html += bottleCard(e);
+    });
+  } else {
+    html = list.map(bottleCard).join("");
+  }
+  grid.innerHTML = html;
+  $$("#grid .bottle").forEach(function(el){
+    el.addEventListener("click", function(){ openDetail(el.getAttribute("data-id")); });
+  });
+}
+
+/* ---------- add flow ---------- */
+function openAdd(){
+  $("#addTitle").textContent = "Add a bottle";
+  $("#addBody").innerHTML =
+    '<div class="field"><label for="wineSearch">Find a wine</label>'+
+    '<div class="search-field"><span class="mag">&#8981;</span><input id="wineSearch" type="text" placeholder="Search producers &amp; wines (e.g. Tignanello, Riscal, Pichon)&hellip;" autocomplete="off"></div></div>'+
+    '<div class="results" id="wineResults"></div>'+
+    '<div class="helper" id="catNote"></div>'+
+    '<div class="manual-link">Can\'t find it? <a id="manualAdd">Add a bottle manually</a></div>';
+  openOverlay("addOverlay");
+  var input = $("#wineSearch");
+  input.addEventListener("input", function(){ renderWineResults(input.value); });
+  $("#manualAdd").addEventListener("click", function(){ openBottleForm(null); });
+  renderWineResults("");
+  setCatNote();
+  setTimeout(function(){ input.focus(); }, 60);
+}
+function renderWineResults(q){
+  q = (q||"").toLowerCase().trim();
+  var list = [];
+  var i, w;
+  if (!q){
+    for (i=0;i<CATALOG.length && list.length<12;i++) list.push(CATALOG[i]);
+  } else {
+    for (i=0;i<CATALOG.length && list.length<14;i++){
+      w = CATALOG[i];
+      if ((w.producer||"").toLowerCase().indexOf(q)===0) list.push(w);
+    }
+    if (list.length<14){
+      for (i=0;i<CATALOG.length && list.length<14;i++){
+        w = CATALOG[i];
+        if (list.indexOf(w)!==-1) continue;
+        var hay = (w.producer+" "+w.name+" "+w.region+" "+w.country+" "+w.grape).toLowerCase();
+        if (hay.indexOf(q)!==-1) list.push(w);
+      }
+    }
+  }
+  var box = $("#wineResults");
+  if (list.length === 0){
+    box.innerHTML = '<div class="res"><div><div class="d">No match in the catalogue \u2014 use "Add a bottle manually" below.</div></div></div>';
+    return;
+  }
+  box.innerHTML = list.map(function(w){
+    var label = w.name ? (w.producer+" \u2014 "+w.name) : w.producer;
+    return '<div class="res" data-wine="'+esc(w.cid)+'">'+
+      '<div><div class="p">'+esc(label)+'</div><div class="d">'+esc(w.region||"\u2014")+' \u00b7 '+esc(w.grape||"\u2014")+'</div></div>'+
+      '<span class="add">Select</span></div>';
+  }).join("");
+  $$("#wineResults .res[data-wine]").forEach(function(el){
+    el.addEventListener("click", function(){
+      var picked = null, j;
+      for (j=0;j<CATALOG.length;j++){ if (CATALOG[j].cid===el.getAttribute("data-wine")){ picked = CATALOG[j]; break; } }
+      if (picked) openBottleForm(picked);
+    });
+  });
+}
+function regionKeyOptions(selected){
+  return Object.keys(REGION_NAMES).map(function(k){
+    return '<option value="'+k+'"'+(k===selected?" selected":"")+'>'+esc(REGION_NAMES[k])+'</option>';
+  }).join("");
+}
+var GRAPE_LIST = ["Bordeaux Blend","Cabernet Sauvignon","Merlot","Cabernet Blend","Cabernet Franc","Cabernet-Malbec","Sangiovese","Sangiovese Blend","Cab-Sangiovese Blend","Pinot Noir","Nebbiolo","Chardonnay","Tempranillo","Champagne Blend","Syrah","Grenache","Grenache Blend (GSM)","Shiraz","Riesling","Port Blend","S\u00e9millon Blend"];
+
+function styleFromRk(rk){
+  var map = {bordeaux:"bordeaux",sauternes:"sweet",burgundy_red:"pinot",burgundy_white:"whiteBurg",piedmont:"nebbiolo",tuscany:"sangiovese",rioja:"tempranillo",ribera:"tempranillo",champagne:"champagne",napa_cab:"cabernet",rhone_north:"syrah",rhone_south:"grenache",port:"port",germany:"riesling",barossa:"shiraz",mendoza:"cabernet"};
+  return map[rk] || "bordeaux";
+}
+
+function openBottleForm(wine){
+  var isManual = !wine;
+  $("#addTitle").textContent = wine ? "Add to cellar" : "Add a bottle manually";
+  var w = wine || {producer:"", name:"", region:"", country:"", rk:"", style:"bordeaux", grape:""};
+
+  var yearOpts = ['<option value="">Vintage&hellip;</option>','<option value="NV">Non-Vintage</option>'];
+  for (var y=NOW; y>=1960; y--) yearOpts.push('<option value="'+y+'">'+y+'</option>');
+
+  var identity = isManual ?
+    '<div class="row-2">'+
+      '<div class="field"><label>Producer</label><input id="f-producer" type="text" placeholder="e.g. Ch\u00e2teau Margaux"></div>'+
+      '<div class="field"><label>Wine / cuv\u00e9e <span style="text-transform:none">(optional)</span></label><input id="f-name" type="text" placeholder="e.g. Grand Vin"></div>'+
+    '</div>'+
+    '<div class="row-2">'+
+      '<div class="field"><label>Region</label><select id="f-rk">'+regionKeyOptions("bordeaux")+'<option value="">Other / not listed</option></select></div>'+
+      '<div class="field"><label>Grape</label><select id="f-grape"><option value="">Select&hellip;</option>'+GRAPE_LIST.map(function(g){ return '<option>'+esc(g)+'</option>'; }).join("")+'</select></div>'+
+    '</div>'
+    :
+    '<div class="detail-hero" style="margin-bottom:8px">'+
+      '<div><div class="p">'+esc(w.producer)+'</div><div class="n">'+esc(w.name||"")+'</div></div>'+
+    '</div>'+
+    '<div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+
+      '<span class="chip grape">'+esc(w.grape||"\u2014")+'</span><span class="chip">'+esc(w.region||"\u2014")+'</span>'+(w.country?'<span class="chip">'+esc(w.country)+'</span>':'')+
+    '</div>';
+
+  var body =
+    identity +
+    '<div class="row-2">'+
+      '<div class="field"><label>Vintage</label><select id="f-vintage">'+yearOpts.join("")+'</select></div>'+
+      '<div class="field"><label>Quantity</label>'+
+        '<div class="stepper"><button type="button" id="q-minus">\u2212</button><input id="f-qty" type="number" min="1" value="1"><button type="button" id="q-plus">+</button></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="row-2">'+
+      '<div class="field"><label>Purchase price / bottle <span style="text-transform:none">(optional)</span></label><input id="f-cost" type="number" min="0" step="1" placeholder="\u2014"></div>'+
+      '<div class="field"><label>Bottle size</label><select id="f-size"><option>750ml</option><option>375ml (Half)</option><option>1.5L (Magnum)</option><option>3L (Double Magnum)</option></select></div>'+
+    '</div>'+
+    '<div class="field"><label>Market value / bottle <span style="text-transform:none">(optional)</span></label>'+
+      '<input id="f-value" type="number" min="0" step="1" placeholder="\u2014">'+
+      '<div class="helper">Not fetched automatically. <a id="wsLink" href="#" target="_blank" rel="noopener">Search on Wine-Searcher &#8599;</a> to check the real current price, then enter it here.</div>'+
+    '</div>'+
+    '<div class="row-2">'+
+      '<div class="field"><label>My score <span style="text-transform:none">(0\u2013100, optional)</span></label><input id="f-score" type="number" min="0" max="100" placeholder="\u2014"></div>'+
+      '<div class="field"><label>Storage location <span style="text-transform:none">(optional)</span></label><input id="f-loc" type="text" placeholder="e.g. Cellar, rack B3"></div>'+
+    '</div>'+
+    '<div class="field"><label>Notes <span style="text-transform:none">(optional)</span></label><textarea id="f-notes" rows="2" placeholder="Tasting notes, provenance, occasion&hellip;"></textarea></div>'+
+    '<div id="vintageOut"></div>';
+
+  $("#addBody").innerHTML = body;
+  var ctx = {wine:w, isManual:isManual};
+
+  $("#q-minus").addEventListener("click", function(){ var el=$("#f-qty"); el.value=Math.max(1,(Number(el.value)||1)-1); });
+  $("#q-plus").addEventListener("click", function(){ var el=$("#f-qty"); el.value=(Number(el.value)||1)+1; });
+
+  function updateVintage(){
+    var yv = $("#f-vintage").value;
+    var rk = isManual ? ($("#f-rk").value || "") : w.rk;
+    var style = isManual ? styleFromRk(rk) : w.style;
+    renderVintagePanel($("#vintageOut"), rk, style, yv);
+    var wsl = $("#wsLink");
+    if (wsl){
+      var prod = isManual ? ($("#f-producer").value||"") : w.producer;
+      var nm = isManual ? ($("#f-name").value||"") : w.name;
+      wsl.href = wineSearcherUrl({producer:prod, name:nm}, yv==="NV"?"":yv);
+    }
+  }
+  $("#f-vintage").addEventListener("change", updateVintage);
+  if (isManual){
+    $("#f-rk").addEventListener("change", updateVintage);
+    $("#f-producer").addEventListener("input", updateVintage);
+  }
+  updateVintage();
+  ensureAddFooter(function(){ saveBottle(ctx); });
+}
+function renderVintagePanel(target, rk, style, yv){
+  if (!yv){ target.innerHTML=""; return; }
+  if (yv === "NV"){
+    target.innerHTML = '<div class="vpanel"><div class="vnote">Non-vintage bottling \u2014 drink on release or within a few years. Vintage charts don\'t apply.</div></div>';
+    return;
+  }
+  if (!rk){
+    target.innerHTML = '<div class="vpanel"><div class="vnote">This region isn\'t in the app\'s vintage reference, so there\'s no assessment or maturity estimate for it. Check a professional vintage chart for '+esc(yv)+'.</div></div>';
+    return;
+  }
+  var vint = getVintage(rk, yv);
+  var win = computeWindow(style, yv, vint ? vint.q : null);
+  var st = statusFor(win.from, win.to);
+  var head, note;
+  if (vint){
+    head = '<div class="vhead"><span class="vq">'+esc(REGION_NAMES[rk]||"")+' '+esc(yv)+'</span><span class="vtag '+ratingClass(vint.q)+'">'+esc(vint.q)+'</span></div>';
+    note = '<div class="vnote">'+esc(vint.note)+'</div>';
+  } else {
+    head = '<div class="vhead"><span class="vq">'+esc(REGION_NAMES[rk]||"This region")+' '+esc(yv)+'</span></div>';
+    note = '<div class="vnote">No vintage reference on file for this region/year. Check a professional vintage chart.</div>';
+  }
+  var winTxt = '<div class="vwin"><strong>Estimated maturity:</strong> '+win.from+'\u2013'+win.to+' \u00b7 <span class="status '+st.cls+'" style="margin-left:4px">'+esc(st.label)+'</span></div>';
+  var caveat = '<div class="vcaveat">General reference &amp; rough estimate only \u2014 verify against a professional vintage chart (Decanter, Wine Spectator, Vinous, Jancis Robinson).</div>';
+  target.innerHTML = '<div class="vpanel">'+head+note+winTxt+caveat+'</div>';
+}
+var addFooterHandler = null;
+function ensureAddFooter(onSave){
+  var modal = $("#addOverlay .modal");
+  var foot = modal.querySelector(".modal-foot");
+  if (!foot){
+    foot = document.createElement("div");
+    foot.className = "modal-foot";
+    foot.innerHTML = '<span class="helper" style="margin:0">Saved to this device.</span><div><button class="btn-ghost" data-close="addOverlay">Cancel</button> <button class="btn-primary" id="saveBottleBtn">Add to cellar</button></div>';
+    modal.appendChild(foot);
+    foot.querySelectorAll("[data-close]").forEach(function(b){ b.addEventListener("click", function(){ closeOverlay("addOverlay"); }); });
+  }
+  var btn = foot.querySelector("#saveBottleBtn");
+  if (addFooterHandler) btn.removeEventListener("click", addFooterHandler);
+  addFooterHandler = onSave;
+  btn.addEventListener("click", addFooterHandler);
+}
+function removeAddFooter(){
+  var foot = $("#addOverlay .modal .modal-foot");
+  if (foot) foot.parentNode.removeChild(foot);
+  addFooterHandler = null;
+}
+function numOrNull(v){ if (v===""||v==null) return null; var n=Number(v); return isNaN(n)?null:n; }
+function saveBottle(ctx){
+  var w = ctx.wine;
+  var isManual = ctx.isManual;
+  var vintage = $("#f-vintage").value;
+  if (!vintage){ toast("Please choose a vintage."); return; }
+  var producer = isManual ? ($("#f-producer").value.trim()) : w.producer;
+  if (isManual && !producer){ toast("Please enter a producer."); return; }
+  var name = isManual ? ($("#f-name").value.trim()) : (w.name||"");
+  var rk = isManual ? ($("#f-rk").value||"") : w.rk;
+  var style = isManual ? styleFromRk(rk) : w.style;
+  var grape = isManual ? ($("#f-grape").value || "Other") : w.grape;
+  var region = isManual ? (REGION_NAMES[rk] || "Other") : w.region;
+  var country = isManual ? "" : w.country;
+  var vint = vintage==="NV" ? null : getVintage(rk, vintage);
+  var win = (vintage==="NV" || !rk) ? {} : computeWindow(style, vintage, vint?vint.q:null);
+  var entry = {
+    id: uid(),
+    producer:producer, name:name, region:region, country:country, rk:rk, style:style, grape:grape,
+    vintage:vintage,
+    quantity: Math.max(1, Number($("#f-qty").value)||1),
+    size: $("#f-size").value,
+    cost: numOrNull($("#f-cost").value),
+    value: numOrNull($("#f-value").value),
+    myScore: numOrNull($("#f-score").value),
+    location: $("#f-loc").value.trim(),
+    notes: $("#f-notes").value.trim(),
+    vintageQ: vint ? vint.q : null,
+    win: win,
+    addedAt: Date.now()
+  };
+  state.cellar.push(entry);
+  saveCellar();
+  removeAddFooter();
+  closeOverlay("addOverlay");
+  renderStats();
+  renderCellar();
+  toast((name?producer+" "+name:producer) + " " + (vintage==="NV"?"":vintage) + " added.");
+}
+
+/* ---------- detail ---------- */
+function openDetail(id){
+  var e = null, k;
+  for (k=0;k<state.cellar.length;k++){ if (state.cellar[k].id===id){ e = state.cellar[k]; break; } }
+  if (!e) return;
+  var win = e.win || {};
+  var st = statusFor(win.from, win.to);
+  var vintPanel = (function(){
+    if (e.vintage==="NV") return '<div class="vpanel"><div class="vnote">Non-vintage bottling \u2014 vintage charts don\'t apply.</div></div>';
+    if (!e.rk){
+      return '<div class="vpanel"><div class="vhead"><span class="vq">'+esc(e.region||"Region")+' '+esc(e.vintage)+'</span></div><div class="vnote">This region isn\'t in the app\'s vintage reference, so there\'s no assessment or maturity estimate. Check a professional vintage chart.</div></div>';
+    }
+    var vint = getVintage(e.rk, e.vintage);
+    var head, note;
+    if (vint){
+      head = '<div class="vhead"><span class="vq">'+esc(REGION_NAMES[e.rk]||"")+' '+esc(e.vintage)+'</span><span class="vtag '+ratingClass(vint.q)+'">'+esc(vint.q)+'</span></div>';
+      note = '<div class="vnote">'+esc(vint.note)+'</div>';
+    } else {
+      head = '<div class="vhead"><span class="vq">'+esc(REGION_NAMES[e.rk]||e.region||"Region")+' '+esc(e.vintage)+'</span></div>';
+      note = '<div class="vnote">No vintage reference on file for this year. Check a professional vintage chart.</div>';
+    }
+    var winTxt = win.from ? '<div class="vwin"><strong>Estimated maturity:</strong> '+win.from+'\u2013'+win.to+' \u00b7 <span class="status '+st.cls+'" style="margin-left:4px">'+esc(st.label)+'</span></div>' : "";
+    var caveat = '<div class="vcaveat">General reference &amp; rough estimate \u2014 verify against a professional vintage chart.</div>';
+    return '<div class="vpanel">'+head+note+winTxt+caveat+'</div>';
+  })();
+
+  $("#detailOverlay .modal-head h2").textContent = "In your cellar";
+  $("#detailBody").innerHTML =
+    '<div class="detail-hero">'+
+      '<div><div class="p">'+esc(e.producer)+'</div><div class="n">'+esc(e.name||"")+'</div>'+
+        '<div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="chip grape">'+esc(e.grape||"\u2014")+'</span><span class="chip">'+esc(e.region||"\u2014")+'</span></div>'+
+      '</div>'+
+      '<div class="big-vint">'+esc(e.vintage||"NV")+'</div>'+
+    '</div>'+
+    vintPanel +
+    '<div class="kv">'+
+      '<div><div class="k">In cellar</div><div class="v">'+esc(e.quantity)+' \u00d7 '+esc(e.size||"750ml")+'</div></div>'+
+      '<div><div class="k">Market value / btl</div><div class="v">'+ (e.value!=null?fmtCur(e.value):"\u2014") +'</div></div>'+
+      '<div><div class="k">Purchase / btl</div><div class="v">'+ (e.cost!=null?fmtCur(e.cost):"\u2014") +'</div></div>'+
+      '<div><div class="k">My score</div><div class="v">'+ (e.myScore!=null?esc(e.myScore)+" / 100":"\u2014") +'</div></div>'+
+      '<div><div class="k">Location</div><div class="v">'+ esc(e.location||"\u2014") +'</div></div>'+
+      '<div><div class="k">Value of holding</div><div class="v">'+ (e.value!=null?fmtCur(Number(e.value)*Number(e.quantity)):"\u2014") +'</div></div>'+
+    '</div>'+
+    (e.notes ? '<div class="field"><div class="k" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft)">Notes</div><div class="v" style="font-size:14px;line-height:1.55;margin-top:4px">'+esc(e.notes)+'</div></div>' : "")+
+    '<div class="helper" style="margin-top:10px"><a href="'+esc(wineSearcherUrl(e, e.vintage==="NV"?"":e.vintage))+'" target="_blank" rel="noopener">Check current price on Wine-Searcher &#8599;</a></div>';
+
+  var modal = $("#detailOverlay .modal");
+  var foot = modal.querySelector(".modal-foot");
+  if (!foot){ foot = document.createElement("div"); foot.className="modal-foot"; modal.appendChild(foot); }
+  foot.innerHTML =
+    '<button class="btn-danger" id="del-btn">Remove</button>'+
+    '<div class="stepper" title="Adjust quantity"><button type="button" id="d-minus">\u2212</button><input id="d-qty" type="number" min="0" value="'+esc(e.quantity)+'"><button type="button" id="d-plus">+</button></div>';
+
+  openOverlay("detailOverlay");
+
+  function commitQty(val){
+    val = Math.max(0, val);
+    if (val === 0){
+      if (window.confirm("Remove "+e.producer+" "+(e.vintage||"")+" from your cellar?")){
+        state.cellar = state.cellar.filter(function(x){ return x.id!==e.id; });
+        saveCellar(); closeOverlay("detailOverlay"); renderStats(); renderCellar();
+        toast("Removed from cellar.");
+      } else { $("#d-qty").value = e.quantity; }
+      return;
+    }
+    e.quantity = val; saveCellar(); renderStats(); renderCellar();
+    openDetail(e.id);
+  }
+  $("#d-minus").addEventListener("click", function(){ commitQty((Number($("#d-qty").value)||0)-1); });
+  $("#d-plus").addEventListener("click", function(){ commitQty((Number($("#d-qty").value)||0)+1); });
+  $("#d-qty").addEventListener("change", function(){ commitQty(Number($("#d-qty").value)||0); });
+  $("#del-btn").addEventListener("click", function(){
+    if (window.confirm("Remove "+e.producer+" "+(e.vintage||"")+" from your cellar?")){
+      state.cellar = state.cellar.filter(function(x){ return x.id!==e.id; });
+      saveCellar(); closeOverlay("detailOverlay"); renderStats(); renderCellar();
+      toast("Removed from cellar.");
+    }
+  });
+}
+
+/* ---------- overlays + wiring ---------- */
+function openOverlay(id){ $("#"+id).classList.add("show"); document.body.style.overflow="hidden"; }
+function closeOverlay(id){ $("#"+id).classList.remove("show"); document.body.style.overflow=""; if (id==="addOverlay") removeAddFooter(); }
+
+function wire(){
+  $("#enterBtn").addEventListener("click", enterApp);
+  $("#ob-submit").addEventListener("click", submitOnboarding);
+  $("#addBtn").addEventListener("click", openAdd);
+  $("#aboutBtn").addEventListener("click", function(){ openOverlay("aboutOverlay"); });
+  $("#aboutLink").addEventListener("click", function(){ openOverlay("aboutOverlay"); });
+
+  $("#filterInput").addEventListener("input", function(ev){ state.filter = ev.target.value; renderCellar(); });
+  $("#sortSelect").addEventListener("change", function(ev){ state.sort = ev.target.value; renderCellar(); });
+  $("#curSelect").addEventListener("change", function(ev){
+    state.currency = ev.target.value;
+    if (state.profile){ state.profile.currency = state.currency; saveProfile(); }
+    renderStats(); renderCellar();
+  });
+
+  $$("[data-close]").forEach(function(b){ b.addEventListener("click", function(){ closeOverlay(b.getAttribute("data-close")); }); });
+  $$(".overlay").forEach(function(ov){
+    ov.addEventListener("click", function(ev){ if (ev.target===ov) closeOverlay(ov.id); });
+  });
+  document.addEventListener("keydown", function(ev){
+    if (ev.key==="Escape"){ var open=$$(".overlay.show"); if (open.length) closeOverlay(open[open.length-1].id); }
+  });
+}
+
+/* ---------- bootstrap ---------- */
+async function init(){
+  wire();
+  await loadState();
+  loadExtraCatalog();
+  startSplash();
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
